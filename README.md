@@ -10,7 +10,7 @@
 [![AHP Consistency](https://img.shields.io/badge/AHP%20CR-0.0038%20%3C%200.10-2563EB?style=flat-square)](#24-multi-criteria-effectiveness-pareto--ahp)
 [![Monte Carlo](https://img.shields.io/badge/Monte%20Carlo-10%E2%81%B6%20%2B%2010k%20Runs%20(seed%3D42)-7C3AED?style=flat-square)](#32-robustness-monte-carlo-oat-sensitivity--extreme-heat)
 
-*An hourly, quasi-steady, one-zone heat-and-moisture balance framework with a served sub-zone, explicit capture ratio, universal coverage scaling law ($\rho = c\,n\,A_{\text{cov}}/A_{\text{floor}} = 1$), 4-objective Pareto + AHP optimization, and multi-layer Monte Carlo robustness analysis.*
+*An hourly, quasi-steady, one-zone heat-and-moisture balance framework with a served sub-zone, explicit capture ratio, universal coverage scaling law ($\rho = c, n, A_{\text{cov}}/A_{\text{floor}} = 1$), 4-objective Pareto + AHP optimization, and multi-layer Monte Carlo robustness analysis.*
 
 [📄 Final Report (PDF)](./01_Final_Report/19386.pdf) • [📊 AHP Rankings (CSV)](./04_Data_and_Results/AHP_Ranking_Official_Team19386_14Nov_v2.4.0.csv) • [🔍 Sensitivity Tracking (CSV)](./04_Data_and_Results/Sensitivity_RankTracking_LeMinh_15Nov_v5.0.csv) • [✅ Validation Audit (CSV)](./04_Data_and_Results/ValidationChecks_Team19386_14Nov_v2.4.0.csv)
 
