@@ -1,262 +1,234 @@
 <div align="center">
 
-# Cooling What Matters: A Heat-Moisture Balance Framework for Measuring and Optimizing Cooling in Open-Air and Semi-Open Public Spaces
+# Cool the Heat, Not Just the Air: A Framework for Making Site-Specific Decisions About Outdoor and Semi-Outdoor Public Spaces
 
 **COMAP High School Mathematical Contest in Modeling (HiMCM) 2026 — Problem B | Team #19386**
 
 [![Python](https://img.shields.io/badge/Python-3.13.18-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
-[![Model](https://img.shields.io/badge/Model-Deterministic%20V2.4.0%20(cap40)-0F766E?style=flat-square)](#2-physical-formulation--scaling-law)
-[![Verification](https://img.shields.io/badge/Reproducibility%20Checks-13%2F13%20Passed-16A34A?style=flat-square)](./02_Code_and_Reproducibility/Reproduction_Log.txt)
+[![Model](https://img.shields.io/badge/Model-Deterministic%20V2.4.0%20(cap40)-0F766E?style=flat-square)](#2-physical-formulation--decision-framework)
+[![Verification](https://img.shields.io/badge/Verification-Audit%20Passed-16A34A?style=flat-square)](./02_Code_and_Reproducibility/Reproduction_Log.txt)
 [![AHP Consistency](https://img.shields.io/badge/AHP%20CR-0.0038%20%3C%200.10-2563EB?style=flat-square)](#24-multi-criteria-effectiveness-pareto--ahp)
-[![Monte Carlo](https://img.shields.io/badge/Monte%20Carlo-10k%20Runs%20(seed%3D42)-7C3AED?style=flat-square)](#32-robustness-monte-carlo-oat-sensitivity--extreme-heat)
+[![Monte Carlo](https://img.shields.io/badge/Monte%20Carlo-10k%20Runs%20%C3%97%2016%20Configs-7C3AED?style=flat-square)](#32-robustness-oat-sensitivity-heatwave-stress--monte-carlo)
+[![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=flat-square)](./LICENSE)
 
-An hourly, quasi-steady, one-zone heat-and-moisture balance framework with a served sub-zone, explicit capture ratio, universal coverage scaling law ($\rho = \dfrac{c\,n\,A_{\text{cov}}}{A_{\text{floor}}} = 1$), 4-objective Pareto + AHP optimization, and multi-layer Monte Carlo robustness analysis.
+A reduced-order, one-zone, quasi-steady hourly heat-and-moisture balance framework coupling solar and envelope gains, natural ventilation, occupant loads, served-zone crowd capture, four-objective Pareto + AHP optimization (`cap40`), and 10,000-scenario Monte Carlo uncertainty analysis.
 
-[📄 Final Report (PDF)](./01_Final_Report/19386.pdf) • [📊 AHP Rankings (CSV)](./04_Data_and_Results/AHP_Ranking_Official_Team19386_14Nov_v2.4.0.csv) • [🔍 Sensitivity Tracking (CSV)](./04_Data_and_Results/Sensitivity_RankTracking_LeMinh_15Nov_v5.0.csv) • [✅ Validation Audit (CSV)](./04_Data_and_Results/ValidationChecks_Team19386_14Nov_v2.4.0.csv)
+[📄 Official Submission (PDF)](./01_Final_Report/19386.pdf) • [📊 AHP Rankings (CSV)](./04_Data_and_Results/AHP_Ranking_Official_Team19386_14Nov_v2.4.0.csv) • [🔍 Sensitivity Tracking (CSV)](./04_Data_and_Results/Sensitivity_RankTracking_LeMinh_15Nov_v5.0.csv) • [✅ Validation Audit (CSV)](./04_Data_and_Results/ValidationChecks_Team19386_14Nov_v2.4.0.csv)
 
 </div>
 
+> **Competition Status Notice:** Official solution package submitted to COMAP HiMCM 2026 (Problem B). Results are pending announcement by January 31, 2027.
+
 ---
 
-## 1. Core Insights & Executive Summary
+## 1. Executive Summary & Core Findings
 
-Open-air and semi-open public venues cool people while exposed to the surrounding atmosphere, losing most conditioned air to ambient infiltration, much like an open-front refrigerated display case, where over **80%** of the cooling load is driven by warm air infiltration across the air curtain. Consequently, cooling performance cannot be judged by rated device capacity or kWh alone; it must be measured by the **useful thermal relief delivered to people**.
+Unlike enclosed indoor rooms, open-air and semi-open public venues lose conditioned air rapidly to outdoor airflow while solar radiation and crowd density alter local thermal stress. Much like an open-front refrigerated display case—where warm air infiltration across the air curtain drives the majority of cooling load—judging public cooling by rated device capacity or electricity consumption alone misrepresents occupant protection.
 
-Evaluating **7,728 summer operating hours** per site (June–August 2020–2026, 09:00–21:00) across four contrasting venues in three climates (**Hanoi Bus Stop**, **Hanoi Railway Station**, **Honolulu International Airport**, and **Sun Devil Stadium in Tempe/Phoenix**) yields five principal conclusions:
+Using **7,728 summer operating hours** per site (June–August 2020–2026, 09:00–21:00 local time) across four venues in three climates (**Hanoi Bus Shelter**, **Hanoi Railway Station**, **Honolulu International Airport**, and **Sun Devil Stadium in Phoenix, Arizona**), our deterministic **V2.4.0 (`cap40`)** framework evaluates three technologies against a no-cooling baseline (`Baseline-0`): recirculating fans (**System A**), medium-capacity evaporative cooling (**System B**, rated drop $5\text{ }^\circ\text{C}$), and high-capacity evaporative cooling (**System C**, rated drop $8\text{ }^\circ\text{C}$).
 
-1. **Efficiency Is Not Effectiveness:** At the Hanoi bus stop, a single recirculating fan (`A-1`) is **5× more energy-efficient** than a large evaporative cooler (`C-1`) ($\eta_T = 5.83$ vs. $1.13$ person·°C/kWh), yet removes only **2.49 pp** of danger-hours versus **4.63 pp** for `C-1`. Selecting a single metric leads to suboptimal investments.
-2. **Climate, Not Equipment, Sets Evaporative Value:** Direct evaporative cooling is bounded by wet-bulb depression ($D = T - T_w$). System C reaches its rated 8 °C supply drop in **93.1%** of Phoenix operating hours ($D_{\text{mean}} = 17.6$ °C), compared with just **1.2%** in humid Hanoi ($D_{\text{mean}} = 3.8$ °C) and **1.6%** in Honolulu ($D_{\text{mean}} = 5.6$ °C). Safety-weighted efficiency ($\eta_S$) is **85× higher** at Sun Devil Stadium (`C-40`: $15.59$) than at the Hanoi Bus Stop (`C-7`: $0.185$).
-3. **Universal Coverage Scaling Law ($\rho = 1$):** Thermal efficiency $\eta_T(n)$ remains flat while each added unit reaches new occupants ($\rho = \dfrac{c\,n\,A_{\text{cov}}}{A_{\text{floor}}} \le 1$) and decays strictly as $1/n$ once the crowd is saturated ($\rho > 1$). Installing beyond $n^* = \dfrac{A_{\text{floor}}}{c\,A_{\text{cov}}}$ buys airflow without reaching new people.
-4. **Site-Specific Optima (`cap40` Scan, 484 Configs → 290 Pareto-Efficient):**
-   * **Sun Devil Stadium (Phoenix):** `C-40` (AHP Rank #1, score `0.6507`) cuts danger share from **66.31% → 50.25%** for **USD 60,948/yr** (USD 3,795/pp); stage 40 units now, verify via pilot, then expand toward `C-104` ($\rho \approx 1$, danger **24.55%**).
-   * **Hanoi Railway Station:** `B-40` (AHP Rank #1, score `0.8101`) cuts danger share from **56.84% → 49.50%** for **USD 25,334/yr** (USD 3,448/pp).
-   * **Hanoi Bus Stop:** `C-7` is the mathematical min-max optimum (score `0.8590`, danger **45.22% → 35.27%**, USD 10,271/yr), whereas **two fans (`A-2`)** represent the physically feasible full-coverage design ($\rho = 1$, danger **41.23%**, **USD 308/yr**, USD 77/pp).
-   * **Honolulu International Airport:** **No cooling (`Baseline-0`)** is optimal (score `0.7730`; baseline danger share is already **0.00%**).
-5. **Extreme Heat Requires Operations, Not Just Machines:** During the hottest 5% of operating hours ($T \ge 44.3$ °C in Phoenix, $35.5$ °C in Hanoi), danger share stays **≥ 99.1%** across every hardware configuration, and a +3 °C warming lifts baseline danger to **82–88%**. Hardware must be paired with afternoon scheduling (12:00–17:00 captures 75–83% of hot hours), shade, free hydration, dwell-time limits, and tiered heat alerts.
+1. **Thermodynamics & Local Climate Govern Technology Value:** Evaporative cooling is bounded by ambient wet-bulb depression ($T_{\text{amb}} - T_{\text{wb}}$). In arid Phoenix, high-capacity evaporative cooling (`C-40`) achieves an electrical efficiency of $\eta_{\text{EDH38}} = 15.59\text{ person·}^\circ\text{C·h/kWh}$ and cuts danger share from **66.31% to 50.25%**. In humid Hanoi, narrow wet-bulb depression limits evaporative temperature drops, yielding $\eta_{\text{EDH38}} = 0.8200$ at the railway station (`B-40`) and $0.1846$ at the bus shelter (`C-7`).
+2. **Site-Specific `cap40` Optima (484 Candidate Configurations → 290 Pareto-Efficient):**
+   - **Sun Devil Stadium (Phoenix, AZ):** `C-40` leads `cap40` (AHP score `0.6507`), reducing cumulative Excess Degree-Hours above $38\text{ }^\circ\text{C}$ ($\text{EDH38}$) by **30.03%** and danger share from **66.31% → 50.25%** (`$60,948.07/season-year`).
+   - **Hanoi Railway Station (Hanoi, Vietnam):** `B-40` leads `cap40` (AHP score `0.8101`), reducing $\text{EDH38}$ by **27.02%** and danger share from **56.84% → 49.50%** (`$25,334.40/season-year`).
+   - **Hanoi Bus Shelter (Hanoi, Vietnam):** `C-7` is the mathematical AHP leader (score `0.8590`), cutting $\text{EDH38}$ by **43.63%** and danger share from **45.22% → 35.27%** (`$10,270.69/season-year`). However, mounting seven System C units on a $\approx 6.4\text{ m}^2$ shelter roof is physically unproven, so we recommend a **1–2-unit instrumented engineering pilot** prior to scaling.
+   - **Honolulu International Airport (Honolulu, HI):** `Baseline-0` remains optimal (AHP score `0.7730`), as modeled baseline $\text{EDH38}$ and danger share are already **0.00%** during the operating window (leaving $\eta_{\text{EDH38}}$ undefined as $0/0$).
+3. **Mechanical Cooling Alone Cannot Eliminate Extreme Heat:** Under a $+3\text{ }^\circ\text{C}$ uniform heatwave stress scenario, modeled baseline danger share rises to **81.54%** (Hanoi Bus Shelter), **88.38%** (Hanoi Railway Station), and **84.79%** (Sun Devil Stadium). Hardware must be paired with overhead shade, free hydration, dwell-time advisories, and heat-alert protocols.
 
-### Energy-to-Exposure Value Chain
+### Five-Stage Simulation & Decision Pipeline
 
 ```text
-+-------------------+     +-------------------+     +--------------------------------------+
-|  Electricity E    | --> | Cooling Produced  | --> | Reaches People (Captured Share phi)  |
-|      (kWh)        |     | (dT_sup, v_served)|     | Benefit = dAT_mod x N_served         |
-+-------------------+     +-------------------+     | Efficiency eta_T = Benefit / E       |
-                                   |                +--------------------------------------+
-                                   |
-                                   v  (1 - eta_cap: Leakage)
-                          +-------------------+     +--------------------------------------+
-                          | Swept Away by     | --> | Warm, Moist Ambient Air Re-entrains  |
-                          | Ventilation V_inf |     | (Open-Freezer Curtain Analog)        |
-                          +-------------------+     +--------------------------------------+
++-----------------------+     +-----------------------+     +-----------------------+
+| 1. Weather & Crowd    | --> | 2. Uncooled Baseline  | --> | 3. Cooling Response   |
+| 7,728 Summer Hours    |     | Sol-Air, Wind+Stack   |     | System A (Air Speed)  |
+| Open-Meteo (2020-26)  |     | T_base & w_zone       |     | Systems B/C (Evap.)   |
++-----------------------+     +-----------------------+     +-----------------------+
+                                                                        |
++-----------------------+     +-----------------------+                 v
+| 5. Multi-Criteria     | <-- | 4. Thermal Exposure   | <---------------+
+| Pareto Screening +    |     | AT_mod (28 / 38 °C)   |
+| AHP Ranking (cap40)   |     | S_danger, S_comf, EDH38|
++-----------------------+     +-----------------------+
 ```
 
 ---
 
-## 2. Physical Formulation & Scaling Law
+## 2. Physical Formulation & Decision Framework
 
 ### 2.1 Hourly Quasi-Steady Heat & Moisture Balance
 
-Each venue is modeled as a well-mixed background zone coupled to a served sub-zone around the cooling units over $7 \times 92 \times 12 = 7{,}728$ operating hours ($\Delta t = 1$ h, no thermal mass). Moist-air properties follow Buck's saturation vapor pressure and Stull's wet-bulb formulation. Envelope heat gains combine roof/wall sol-air temperatures, glazing solar gain, and internal crowd/equipment loads ($q_s = 75$ W/person, $q_{\text{lat}} = 55$ W/person, $P_{\text{tb}} = 100$ W).
+Each venue is modeled as a single control volume over $7 \times 92 \times 12 = 7{,}728$ summer operating hours ($\Delta t = 1\text{ h}$). Psychrometric properties follow Buck's saturation vapor-pressure equation and Stull's wet-bulb formulation.
 
-**Sol-air temperatures:**
+**Envelope conductance and sol-air temperatures:**
 
-$$T_{\text{sol},r} = T + \frac{\alpha_r \, \text{GHI}}{h_o} - \Delta T_{\text{sky}}\,(1 - 0.8\,\text{CC})$$
+$$H_{\text{env}} = U_{\text{roof}} A_{\text{roof}} + U_{\text{wall}} A_{\text{wall}} + U_{\text{glass}} A_{\text{glass}}$$
 
-$$T_{\text{sol},w} = T + \frac{\alpha_w \, f_v \, \text{GHI}}{h_o}$$
+$$T_{\text{sol,roof}} = T_{\text{amb}} + \frac{\alpha_{\text{roof}} I_{\text{sol}}}{h_o} - K_{\text{rad}}(1 - 0.8\,C), \qquad T_{\text{sol,wall}} = T_{\text{amb}} + \frac{\alpha_{\text{wall}} \cdot \text{f\_dung} \cdot I_{\text{sol}}}{h_o}$$
 
-**Quadrature wind-plus-buoyancy ventilation:**
+**Glazing solar gain and internal sensible load:**
 
-$$v_{\text{bg}} = \max\left(k\,\alpha_{\text{sh}}\,v_{10},\ v_{\text{min}}\right)$$
+$$Q_{\text{solar,glass}} = A_{\text{glass}} \cdot \text{SHGC} \cdot \text{f\_dung} \cdot I_{\text{sol}}, \qquad Q_{\text{internal}} = N_t \cdot q_s + P_{\text{tb}}$$
 
-$$\dot{V}_w = C_d A_{\text{mo}}\, v_{\text{bg}}, \qquad \dot{V}_b = C_d A_{\text{mo}} \sqrt{\frac{g\,H\,\lvert T_{\text{base}} - T \rvert}{T + 273.15}}$$
+**Coupled wind-driven and buoyancy-driven (stack) ventilation:**
 
-$$\dot{V}_{\text{inf}} = \sqrt{\dot{V}_w^{2} + \dot{V}_b^{2}}$$
+$$v_{\text{eff}} = \max\left(k_{\text{gio}} \cdot \text{alpha\_shelter} \cdot v_{\text{amb}},\ v_{\text{min}}\right)$$
 
-**Baseline zone temperature:**
+$$\dot{V}_{\text{wind}} = C_d A_{\text{open}} v_{\text{eff}}, \qquad \dot{V}_{\text{stack}} = C_d A_{\text{open}} \sqrt{\frac{g\,H\,\lvert T_0 - T_{\text{amb}} \rvert}{T_{\text{amb}} + 273.15}}, \qquad \dot{V}_{\text{inf}} = \sqrt{\dot{V}_{\text{wind}}^{2} + \dot{V}_{\text{stack}}^{2}}$$
 
-$$T_{\text{base}} = \frac{U_r A_r T_{\text{sol},r} + U_w A_w T_{\text{sol},w} + U_g A_g T + \dot{Q}_{\text{glass}} + \dot{Q}_{\text{int}} + H_{\text{vent}}\,T}{H_{\text{env}} + H_{\text{vent}}}$$
+**Baseline zone temperature and humidity ratio** (solved via two-pass predictor-corrector; open-air Sun Devil Stadium sets $w_{\text{zone}} = w_{\text{amb}}$):
 
-$$H_{\text{vent}} = \rho_{\text{da}}\, c_p\, \dot{V}_{\text{inf}}, \qquad H_{\text{env}} = U_r A_r + U_w A_w + U_g A_g$$
+$$T_{\text{base}} = \frac{H_{\text{roof}} T_{\text{sol,roof}} + H_{\text{wall}} T_{\text{sol,wall}} + H_{\text{glass}} T_{\text{amb}} + Q_{\text{solar,glass}} + Q_{\text{internal}} + H_{\text{vent}} T_{\text{amb}}}{H_{\text{env}} + H_{\text{vent}}}, \qquad H_{\text{vent}} = \rho_{\text{da}} c_{p,\text{da}} \dot{V}_{\text{inf}}$$
 
-**Background humidity ratio** (prevents supersaturation in semi-enclosed venues; the open-air stadium branch instead sets $T_{\text{base}} = T$ and $w_{\text{zone}} = w_{\text{out}}$):
+$$w_{\text{zone}} = \min\left(w_{\text{sat}}(T_{\text{base}}),\ w_{\text{amb}} + \frac{N_t\,q_{\text{lat}}}{h_{fg}\,\rho_{\text{da}}\,\max(\dot{V}_{\text{inf}},\ 0.05)}\right)$$
 
-$$w_{\text{zone}} = \min\left\lbrace\, w_{\text{out}} + \frac{N\,q_{\text{lat}}}{h_{fg}\,\rho_{\text{da}}\,\max\left(\dot{V}_{\text{inf}},\ 0.05\right)},\ \ w_{\text{sat}}(T_{\text{base}}) \right\rbrace$$
+### 2.2 Cooling Technologies & Served-Zone Dilution
 
-### 2.2 Cooling Systems & Capture Ratio
+- **System A (Recirculating Fans):** Increases local air speed around served occupants without lowering dry-bulb temperature or adding moisture:
 
-* **Evaporative Coolers (`B`: medium 5 °C / 1.2 kW, `C`: large 8 °C / 2.5 kW):** Supply cooling is adiabatic ($\epsilon = 0.90$) and capped by the wet-bulb depression $D = T - T_w$:
+$$f_{\text{fan}} = \text{clip}\left(\frac{T_{\text{fan,zero}} - T_{\text{base}}}{T_{\text{fan,zero}} - T_{\text{fan,full}}},\ 0,\ 1\right), \qquad v_{\text{increment}} = v_{A,\text{person}}\,f_{\text{fan}}, \qquad v_{\text{served}} = \sqrt{v_{\text{background}}^{2} + v_{\text{increment}}^{2}}$$
 
-$$\Delta T_{\text{sup}} = \max\left\lbrace 0,\ \min\left[\Delta T_{\text{rated}},\ \epsilon\,(T - T_w)\right] \right\rbrace$$
+- **Systems B & C (Evaporative Cooling):** Supply temperature drop is capped by both device rating $\Delta T_{\text{rated}}$ and ambient wet-bulb depression $(T_{\text{amb}} - T_{\text{wb}})$:
 
-$$\dot{m}_{\text{evap}} = \rho_{\text{da}}\,\dot{V}_{\text{sys}}\,\max\left(0,\ w_{\text{sup}} - w_{\text{out}}\right)$$
+$$\Delta T_{\text{supply}} = \max\left[0,\ \min\left(\Delta T_{\text{rated}},\ \text{eps\_evap} \cdot (T_{\text{amb}} - T_{\text{wb}})\right)\right]$$
 
-Coverage, served-people fraction, capture factor, and served temperature:
+For $n$ installed units, covered area fraction, served occupant fraction, zone dilution factor $\varphi$, and water evaporation rate $\dot{m}_{\text{evap}}$ are:
 
-$$f_{\text{cov}} = \min\left(1,\ \frac{n\,A_{\text{cov}}}{A_{\text{floor}}}\right), \qquad f_{\text{people}} = \min\left(1,\ c\,f_{\text{cov}}\right)$$
+$$\dot{V}_{\text{sys}} = \dot{V}_{\text{rated}} \cdot n, \qquad f_{\text{cov}} = \min\left(1,\ \frac{n\,A_{\text{cover}}}{A_{\text{floor}}}\right), \qquad f_{\text{people}} = \min\left(1,\ \alpha_{\text{cluster}}\,f_{\text{cov}}\right)$$
 
-$$\varphi = \text{mix} \cdot \frac{\dot{V}_{\text{sys}}}{\dot{V}_{\text{sys}} + f_{\text{cov}}\,\dot{V}_{\text{inf}}}, \qquad T_{\text{served}} = T_{\text{base}} - \varphi\,\Delta T_{\text{sup}}$$
+$$\varphi = \frac{\text{mix\_eff} \cdot \dot{V}_{\text{sys}}}{\dot{V}_{\text{sys}} + f_{\text{cov}}\,\dot{V}_{\text{inf}}}, \qquad T_{\text{served}} = T_{\text{base}} - \varphi \cdot \Delta T_{\text{supply}}, \qquad \dot{m}_{\text{evap}} = \rho_{\text{da}}\,\dot{V}_{\text{sys}}\,\max(0,\ w_{\text{supply}} - w_{\text{amb}})$$
 
-where $\eta_{\text{cap}} = \varphi / \text{mix}$ ($\text{mix} = 0.5$) is the captured fraction of cooled air and $1 - \eta_{\text{cap}}$ is ventilation leakage.
+### 2.3 Modified Apparent Temperature & EDH38 Efficiency
 
-* **Recirculating Fans (`A`: 0.25 kW):** Elevate local air speed up to 1.2 m/s without changing $T_{\text{base}}$ or moisture, fading linearly between 33 °C and skin temperature (38 °C):
+Occupant heat exposure is evaluated using a team-modified apparent temperature index ($AT_{\text{mod}}$, in $^\circ\text{C}$), classifying person-hours into **Comfort** ($AT_{\text{mod}} \le 28\text{ }^\circ\text{C}$) and **Danger** ($AT_{\text{mod}} \ge 38\text{ }^\circ\text{C}$):
 
-$$f_{\text{fan}} = \text{clip}\left(\frac{38 - T_{\text{base}}}{38 - 33},\ 0,\ 1\right), \qquad v_{\text{served}} = \sqrt{v_{\text{bg}}^{2} + \left(1.2\,f_{\text{fan}}\right)^{2}}$$
+$$AT_{\text{mod}} = T + 0.33\,e - 0.70\,v + \frac{0.70\,Q_g}{v + 10} - 4.25, \qquad Q_g = 0.1333 \cdot f_{\text{sun}} \cdot I_{\text{sol}}$$
 
-### 2.3 Apparent Temperature, Efficiency Metrics & Scaling Law
+Seven-summer mean Excess Degree-Hours above $38\text{ }^\circ\text{C}$ ($\text{EDH38}$, in $\text{person·}^\circ\text{C·h}$), occupancy-weighted danger share ($S_{\text{danger}}$), and cooling electricity efficiency ($\eta_{\text{EDH38}}$, in $\text{person·}^\circ\text{C·h/kWh}$) are computed as:
 
-Human thermal exposure is scored via a team-modified Steadman apparent temperature ($AT_{\text{mod}}$, in °C), classifying each person-hour into **Comfort** ($AT_{\text{mod}} \le 28$ °C), **Stress** ($28 < AT_{\text{mod}} < 38$ °C), or **Danger** ($AT_{\text{mod}} \ge 38$ °C):
+$$\text{EDH38} = \frac{1}{7} \sum_{y=2020}^{2026} \sum_{t \in y} \left[ N_{\text{served},t} \max(0,\ AT_{\text{served},t} - 38) + N_{\text{unserved},t} \max(0,\ AT_{\text{unserved},t} - 38) \right] \Delta t$$
 
-$$AT_{\text{mod}} = T + 0.33\,e - 0.70\,v + \frac{0.70\,Q_g}{v + 10} - 4.25, \qquad Q_g = 0.1333\, f_{\text{sun}}\, \text{GHI}$$
+$$S_{\text{danger}} = \frac{\sum_t \left[ N_{\text{served},t}\,\mathbb{I}(AT_{\text{served},t} \ge 38) + N_{\text{unserved},t}\,\mathbb{I}(AT_{\text{unserved},t} \ge 38) \right]}{\sum_t N_t}$$
 
-Two complementary efficiency metrics quantify thermal relief and safety dose avoided per unit electricity ($E_{\text{kWh}} = n\,P_{\text{unit}}\,h_{\text{season}}$):
-
-$$\eta_T = \frac{\sum_t N_{\text{served}}(t)\,\Delta AT_{\text{mod}}(t)}{E_{\text{kWh}}} \quad [\text{person·°C/kWh}]$$
-
-$$\eta_S = \frac{\text{EDH}_{38}^{\text{base}} - \text{EDH}_{38}^{\text{cfg}}}{E_{\text{kWh}}} \quad [\text{person·°C·h/kWh}]$$
-
-$$\text{EDH}_{38} = \frac{1}{7} \sum_{t} \left[ N_{\text{served}}\left(AT_{\text{mod}}^{s} - 38\right)^{+} + N_{\text{unserved}}\left(AT_{\text{mod}}^{u} - 38\right)^{+} \right]$$
-
-**Coverage Scaling Law.** Defining the people-coverage ratio
-
-$$\rho = \frac{c\,n\,A_{\text{cov}}}{A_{\text{floor}}}$$
-
-efficiency obeys
-
-$$\eta_T(n) = \begin{cases} \eta_T(1), & \rho \le 1 \\[4pt] \eta_T(1)/\rho, & \rho \ge 1 \end{cases}$$
-
-The saturation point $\rho = 1$ gives the maximum useful number of units:
-
-$$n^{*} = \frac{A_{\text{floor}}}{c\,A_{\text{cov}}}$$
+$$\eta_{\text{EDH38}} = \frac{\text{EDH38}_{\text{baseline}} - \text{EDH38}_{\text{configuration}}}{E_{\text{kWh}}}, \qquad E_{\text{kWh}} = P_{\text{rated}} \cdot n \cdot D_{\text{summer}} \cdot H_{\text{daily}}$$
 
 ### 2.4 Multi-Criteria Effectiveness (Pareto + AHP)
 
-Equivalent Annual Cost ($\text{EAC}$, in USD/season-year) combines annualized capital ($r = 6\%$, $L = 10$ yr, $\text{CRF} = 0.1359$), maintenance ($m = 5\%$), electricity, and water:
+Equivalent Annualized Cost ($C_{\text{ann}}$, in $\text{USD/yr}$) combines annualized capital and installation costs with seasonal electricity and water expenditures:
 
-$$\text{CRF} = \frac{r\,(1+r)^{L}}{(1+r)^{L} - 1}, \qquad \text{EAC} = n\,(C_k + I_k)(\text{CRF} + m) + E_{\text{kWh}}\,p_{\text{el}} + V_{\text{water}}\,p_w$$
+$$C_{\text{ann}} = n\,(C_{\text{capex}} + C_{\text{install}})(\text{CRF} + r_{\text{maint}}) + E_{\text{kWh}}\,c_e + W_L\,c_w, \qquad \text{CRF} = \frac{d\,(1+d)^{L}}{(1+d)^{L} - 1}$$
 
-Non-dominated configurations (**290 of 484** under `cap40`) are normalized to $[0, 1]$ per venue and scored via Analytic Hierarchy Process (AHP) weights ($\lambda_{\max} = 4.0104$, $\text{CR} = 0.0038 < 0.10$):
+Across **484 candidate configurations** under `cap40` (121 per venue: `Baseline-0` plus $n = 1\dots 40$ for Systems A, B, and C), **290 Pareto-efficient configurations** survive four-objective screening (59 bus shelter, 83 railway station, 100 airport, 48 stadium) and are ranked via Analytic Hierarchy Process (AHP) weights ($\text{CR} = 0.003838 < 0.10$):
 
-1. **Safety (minimize danger share, $AT_{\text{mod}} \ge 38$ °C):** `0.4236`
-2. **Comfort (maximize comfort share, $AT_{\text{mod}} \le 28$ °C):** `0.2270`
-3. **Cost (minimize Equivalent Annual Cost, EAC):** `0.2270`
-4. **Energy (minimize seasonal electricity, kWh):** `0.1223`
+1. **Criterion 1 — Thermal Heat-Exposure Reduction ($\text{EDH38}$ & $S_{\text{danger}}$):** `0.4236`
+2. **Criterion 2 — Equivalent Annualized Cost ($C_{\text{ann}}$):** `0.2270`
+3. **Criterion 3 — Seasonal Electricity & Water Resource Demand:** `0.2270`
+4. **Criterion 4 — Operational & Spatial Deployment Feasibility:** `0.1223`
 
 ---
 
-## 3. Benchmarks, Resource Footprints & Robustness
+## 3. Official V2.4.0 Benchmarks & Robustness Results
 
-### 3.1 Official Deterministic Recommendations & Environmental Footprints (`cap40` vs. Full-Coverage)
+### 3.1 Official Deterministic Recommendations (`cap40`)
 
-| Venue (Climate & Geometry) | Recommended Option | AHP Score | Danger Share (Base → New) | Comfort Share | $\eta_T$ / $\eta_S$ | Energy (MWh) & CO₂ (t) | Water (m³) | EAC (USD/yr) | Marginal Cost (USD/pp) |
-| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Sun Devil Stadium, Tempe**<br>(Hot-arid, 2,500 m² open) | **C-40** (`cap40` #1)<br>**C-104** (Phase 2, $\rho \approx 1$) | `0.6507`<br>`0.6530` | 66.31% → **50.25%**<br>66.31% → **24.55%** | 2.63%<br>5.65% | 33.60 / **15.59**<br>33.60 / **15.59** | 110.4 / 35.2 t<br>287.0 / 91.6 t | 1,591<br>4,137 | 60,948<br>158,465 | 3,795<br>3,795 |
-| **Hanoi Railway Station**<br>(Hot-humid, 600 m² semi-open) | **B-40** (`cap40` #1)<br>**A-100** (Fan alt.) | `0.8101`<br>— | 56.84% → **49.50%**<br>56.84% → **50.34%** | 0.00%<br>0.00% | 1.22 / **0.820**<br>1.83 / **0.820** | 53.0 / 34.9 t<br>27.6 / 18.2 t | 344<br>0 | 25,334<br>15,388 | 3,448<br>2,367 |
-| **Hanoi Bus Stop**<br>(Hot-humid, 6.4 m² shelter) | **C-7** (Math `cap40` #1)<br>**A-2** (Practical $\rho = 1$) | `0.8590`<br>`0.8690`* | 45.22% → **35.27%**<br>45.22% → **41.23%** | 0.02%<br>0.00% | 0.32 / **0.185**<br>4.66 / **1.690** | 19.3 / 12.7 t<br>0.55 / 0.36 t | 129<br>0 | 10,271<br>308 | 1,032<br>**77** |
-| **Honolulu Int'l Airport**<br>(Mild-humid, 1,200 m²) | **Baseline-0** (`cap40` #1)<br>**C-14** (Targeted comfort) | `0.7730`<br>— | 0.00% → **0.00%**<br>0.00% → **0.00%** | 15.79%<br>18.36% | — / Undef<br>2.01 / Undef | 0.0 / 0.0 t<br>38.6 / 26.1 t | 0<br>398 | 0<br>32,622 | —<br>11,719 per comfort-pp |
+| Venue (Setting) | Official AHP #1 | AHP Score | Baseline $S_{\text{danger}}$ | Selected $S_{\text{danger}}$ | $\text{EDH38}$ Reduction | $\eta_{\text{EDH38}}$ ($\text{person·}^\circ\text{C·h/kWh}$) | Seasonal Energy (MWh) | EAC ($\text{USD/yr}$) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Sun Devil Stadium** (Phoenix, open-air) | **C-40** | `0.6507` | 66.31% | **50.25%** | **30.03%** | **15.59** | 110.40 | $60,948.07 |
+| **Hanoi Railway Station** (Semi-open hall) | **B-40** | `0.8101` | 56.84% | **49.50%** | **27.02%** | **0.8200** | 52.99 | $25,334.40 |
+| **Hanoi Bus Shelter** ($\approx 6.4\text{ m}^2$ roof)* | **C-7** | `0.8590` | 45.22% | **35.27%** | **43.63%** | **0.1846** | 19.32 | $10,270.69 |
+| **Honolulu Int'l Airport** (Terminal) | **Baseline-0** | `0.7730` | 0.00% | **0.00%** | **0.00%** | Undefined ($0/0$) | 0.00 | $0.00 |
 
-*\*`A-2` is the optimal configuration under both the full-coverage cap ($\rho = 1$) and absolute-scale scoring, avoiding the physical impossibility of mounting seven System C units on a 6.4 m² shelter roof.*
+*\*Engineering caveat: Fitting seven System C units onto a $\approx 6.4\text{ m}^2$ bus-shelter roof poses structural and clearance constraints; a **1–2-unit instrumented pilot** is recommended before deployment.*
 
-### 3.2 Robustness: Monte Carlo, OAT Sensitivity & Extreme Heat
+### 3.2 Robustness: OAT Sensitivity, Heatwave Stress & Monte Carlo
 
-| Venue & Selected Config | MC Paired ΔDanger [95% Block-Bootstrap CI] | MC 10k Param+Weather Mean (SD) | OAT Rank Shifts (of 56) | AHP Weight Shifts (±20%, 9 tests) | +2 °C Warming Danger (Const. RH) | Hottest 5% Hours Danger |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Sun Devil Stadium (`C-40`)** | **−15.9 pp** [−16.9, −15.0] | 50.4% (2.7 pp) | **0 / 56** | Retained **9 / 9** | 82.4% → **68.3%** | 100.0% → **99.7%** |
-| **Hanoi Railway Station (`B-40`)** | **−7.5 pp** [−8.1, −6.7] | 49.6% (2.8 pp) | **5 / 56** | Retained **9 / 9** | 91.2% → **88.5%** | 100.0% → **99.5%** |
-| **Hanoi Bus Stop (`C-7` / `A-2`)** | **−10.1 pp** [−11.2, −8.7] | 36.1% (3.3 pp) / 41.9% (2.4 pp) | **13 / 56** | Retained **9 / 9** | 85.4% → **80.5%** | 100.0% → **99.1%** |
-| **Honolulu Airport (`Baseline-0`)** | **0.0 pp** (0% baseline) | 0.0% (0.0 pp) | **2 / 56** | Retained **9 / 9** | 0.9% → **0.9%** | 0.0% → **0.0%** |
+| Venue & Selected Config | OAT Rank Changes (of 56) | AHP Weight Perturbation ($\pm 20\%$, 9 scenarios) | $+3\text{ }^\circ\text{C}$ Heatwave Baseline $S_{\text{danger}}$ | MC 10k Mean $S_{\text{danger}}$ (Base → Config) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Sun Devil Stadium (`C-40`)** | **0 of 56** | Retained **9 / 9** | 84.79% | 66.42% → **50.41%** |
+| **Hanoi Railway Station (`B-40`)** | **5 of 56** | Retained **9 / 9** | 88.38% | 56.91% → **49.63%** |
+| **Hanoi Bus Shelter (`C-7`)** | **13 of 56** | Retained **9 / 9** | 81.54% | 46.11% → **36.06%** |
+| **Honolulu Airport (`Baseline-0`)** | **2 of 56** | Retained **9 / 9** | 0.95% | 0.00% → **0.00%** |
 
-* **Automated Verification (`13 / 13` Passed):** Zero-load energy conservation holds to $7 \times 10^{-15}$ K; evaporative supply temperature never undercuts wet-bulb temperature (minimum margin +0.14 °C); an independent vectorized port reproduces all 290 Pareto-efficient configurations to $5 \times 10^{-10}$; and deterministic execution completes in ~5.7 seconds with `0.0e+00` deviation across all 484 rows.
+- **Reproducibility & Verification:** Deterministic V2.4.0 outputs are cross-checked against automated invariant tests, SHA-256 checksum manifests (`MANIFEST_SHA256.txt`), and independent figure audit dossiers in `./03_Verification_and_Figures/`.
 
 ---
 
 ## 4. Visual Benchmarks & Verification Dossiers
 
-Each primary figure is backed by an independent PDF audit dossier in `./03_Verification_and_Figures/` containing underlying data tables and invariance checks.
-
 ### Figure 1: Four-Objective `cap40` Pareto Frontiers ([Verification Dossier PDF](./03_Verification_and_Figures/Figure_1_Verification_Dossier_V2.4.0.pdf))
 
 ![Four-Objective cap40 Pareto Frontiers](./03_Verification_and_Figures/fig01_pareto_tradeoff.png)
 
-### Figure 2: EDH38 Electricity Efficiency & Occupancy-Weighted AT_mod Distributions ([Verification Dossier PDF](./03_Verification_and_Figures/Figure_2_Verification_Dossier_V2.4.0.pdf))
+### Figure 2: $\text{EDH38}$ Electricity Efficiency & Occupancy-Weighted $AT_{\text{mod}}$ Distributions ([Verification Dossier PDF](./03_Verification_and_Figures/Figure_2_Verification_Dossier_V2.4.0.pdf))
 
 ![EDH38 Efficiency and AT_mod Distributions](./03_Verification_and_Figures/fig02_edh38_efficiency.png)
 
-### Figure 3: AHP Weight Perturbation (±20%) & Operating-Season Sensitivity ([Verification Dossier PDF](./03_Verification_and_Figures/Figure_3_Verification_Dossier_V2.4.0.pdf))
+### Figure 3: AHP Weight Perturbation ($\pm 20\%$) & Operating-Season Sensitivity ([Verification Dossier PDF](./03_Verification_and_Figures/Figure_3_Verification_Dossier_V2.4.0.pdf))
 
 ![AHP Weight and Operating-Season Sensitivity](./03_Verification_and_Figures/fig03_ahp_season_sensitivity.png)
 
 ---
 
-## 5. Operator Guidelines & Tiered Extreme-Heat Protocol
-
-1. **Match Technology to Wet-Bulb Depression ($D = T - T_w$):** Rated evaporative drops require $\epsilon D \ge \Delta T_{\text{rated}}$, i.e., $D \ge 5.6$ °C for System B and $D \ge 8.9$ °C for System C. Use evaporative cooling in arid climates (Tempe: 97% / 93% of hours); prefer fans, shade, and ventilation in humid climates (Hanoi: 19% / 1.2%).
-2. **Size to Coverage ($\rho \approx 1$) & Contain Cooled Jets:** Cap installation count at $n^{*} = \dfrac{A_{\text{floor}}}{c\,A_{\text{cov}}}$ and position units near occupied waiting zones shielded from crosswinds.
-3. **Operate on Demand (12:00–17:00 Window):** 75–83% of hot hours occur between 12:00 and 17:00; run evaporative coolers only when $D \ge 3$ °C and the zone is occupied, and switch to fans below the 33 °C fade-in.
-4. **Enforce a Tiered Extreme-Heat Protocol** keyed to each venue's 95th-percentile operating temperature ($P_{95}$: Hanoi 35.5 °C, Honolulu 29.7 °C, Tempe 44.3 °C):
-   * **Tier 0 — Normal ($T < P_{90}$):** On-demand cooling; shade and drinking-water stations open.
-   * **Tier 1 — Watch ($T \ge P_{90}$ or $D$ below rating):** Pre-cool 1 hour prior to peak crowd arrival; verify water reserves; deploy extra free drinking water.
-   * **Tier 2 — Alert ($T \ge P_{95}$):** Full airflow across 11:00–18:00; shaded queuing; dwell-time advisories; staffed first-aid stations; shift scheduled events to evening where feasible.
-   * **Tier 3 — Emergency ($T \ge P_{95} + 2$ °C or official heat warning):** Cap crowd density or delay entry; open air-conditioned refuge areas; actively monitor vulnerable groups.
-
----
-
-## 6. Repository Structure
+## 5. Repository Structure
 
 ```text
-HiMCM_2026_ProblemB_19386/
+public-space-cooling-model/
+├── LICENSE                                                    # MIT License (Team #19386)
+├── README.md                                                  # Project overview, model formulation & reproduction guide
 ├── 01_Final_Report/
-│   └── 19386.pdf                                              # Official COMAP HiMCM 2026 Problem B submission
+│   └── 19386.pdf                                              # Official COMAP HiMCM 2026 Problem B submission (V2.4.0)
 ├── 02_Code_and_Reproducibility/
-│   ├── PhysicalModel_LeMinh_13Nov_v1.0.py                     # Deterministic hourly solver, Pareto, AHP & OAT
-│   ├── MonteCarloV24_GiaPhu_15Nov_v1.py                       # Parallel 10,000-run Monte Carlo engine (seed=42)
-│   ├── MANIFEST_SHA256.txt                                    # SHA-256 checksums for inputs, code & outputs
-│   ├── Reproduction_Log.txt                                   # Python 3.13.18 verification log (13/13 passed)
+│   ├── PhysicalModel_LeMinh_13Nov_v1.0.py                     # Deterministic hourly solver, Pareto, AHP & OAT scripts
+│   ├── MonteCarloV24_GiaPhu_15Nov_v1.py                       # 10,000-scenario Monte Carlo simulation (16 configs)
+│   ├── MANIFEST_SHA256.txt                                    # SHA-256 checksums for inputs, code & output tables
+│   ├── Reproduction_Log.txt                                   # Deterministic execution & audit verification log
+│   └── Team19386_Final_Technical_Package_16Nov2026_v1_LITE/   # Directory for processed weather CSVs & parameter workbook
 ├── 03_Verification_and_Figures/
 │   ├── fig01_pareto_tradeoff.png                              # Fig 1: Four-objective cap40 Pareto frontiers
 │   ├── Figure_1_Verification_Dossier_V2.4.0.pdf               # Audit verification dossier for Figure 1
-│   ├── fig02_edh38_efficiency.png                             # Fig 2: EDH38 efficiency & AT_mod histograms
+│   ├── fig02_edh38_efficiency.png                             # Fig 2: EDH38 efficiency & AT_mod distributions
 │   ├── Figure_2_Verification_Dossier_V2.4.0.pdf               # Audit verification dossier for Figure 2
-│   ├── fig03_ahp_season_sensitivity.png                       # Fig 3: ±20% AHP weights & season scaling
+│   ├── fig03_ahp_season_sensitivity.png                       # Fig 3: ±20% AHP weights & operating-season scaling
 │   └── Figure_3_Verification_Dossier_V2.4.0.pdf               # Audit verification dossier for Figure 3
 └── 04_Data_and_Results/
     ├── AHP_Ranking_Official_Team19386_14Nov_v2.4.0.csv        # Official V2.4.0 AHP scores & rankings (484 rows)
     ├── Sensitivity_RankTracking_LeMinh_15Nov_v5.0.csv         # Rank reversal tracking across 56 OAT cases
-    └── ValidationChecks_Team19386_14Nov_v2.4.0.csv            # Automated audit & invariant checks (10/10 True)
+    └── ValidationChecks_Team19386_14Nov_v2.4.0.csv            # Automated audit & consistency checks
 ```
 
 ---
 
-## 7. Installation & Reproducibility
+## 6. Installation & Reproducibility
 
-### 7.1 Environment Setup
+### 6.1 Environment Setup
 
-Tested on **Python 3.13.18 (Linux)**. Install the required scientific computing dependencies:
+Tested on **Python 3.13.18**. Install the required scientific Python packages:
 
 ```bash
 pip install numpy==2.5.3 pandas==3.0.5 matplotlib==3.11.2 seaborn==0.13.2 reportlab==5.0.1 openpyxl==3.1.5
 ```
 
-### 7.2 Running the Deterministic & Monte Carlo Pipelines
+### 6.2 Running the Deterministic & Monte Carlo Pipelines
 
-1. **Deterministic V2.4.0 Solver (`cap40` sweep, Pareto screening, AHP & OAT sensitivity):**
-   Place the standardized parameter workbook (`THONG_SO_THONG_NHAT_CHUAN_100_v2.3.2 (1).xlsx`) and the three Open-Meteo hourly CSV files (`Weather Data_Ga_Ha_Noi_GiaPhu_08Nov_v1(1).csv`, `WeatherData_Honolulu_International_Airport_GiaPhu_08Nov_v1(1).csv`, `WeatherData_Sun_Devil_Stadium_GiaPhu_08Nov_v1(2).csv`) inside `<DATA_DIR>` (bundled inside `02_Code_and_Reproducibility/Team19386_Final_Technical_Package_16Nov2026_v1_LITE/`), then run:
+1. **Unpack Input Data into the Technical Package Directory:**
+   Ensure `02_Code_and_Reproducibility/Team19386_Final_Technical_Package_16Nov2026_v1_LITE/` contains the standardized parameter workbook (`THONG_SO_THONG_NHAT_CHUAN_100_v2.3.2 (1).xlsx`), the three processed Open-Meteo hourly CSV files (`Weather Data_Ga_Ha_Noi_GiaPhu_08Nov_v1(1).csv`, `WeatherData_Honolulu_International_Airport_GiaPhu_08Nov_v1(1).csv`, `WeatherData_Sun_Devil_Stadium_GiaPhu_08Nov_v1(2).csv`), and `ModelExt_LeMinh_15Nov_v1.py`.
+
+2. **Deterministic V2.4.0 Solver (`cap40` sweep, Pareto screening, AHP & OAT sensitivity):**
 
    ```bash
    python3 02_Code_and_Reproducibility/PhysicalModel_LeMinh_13Nov_v1.0.py \
-     --data-dir <DATA_DIR> \
+     --data-dir 02_Code_and_Reproducibility/Team19386_Final_Technical_Package_16Nov2026_v1_LITE \
      --workbook "THONG_SO_THONG_NHAT_CHUAN_100_v2.3.2 (1).xlsx" \
      --max-units 40
    ```
 
-2. **10,000-Run Stochastic Monte Carlo Simulation (`seed = 42`):**
-   Ensure the extended model wrapper (`ModelExt_LeMinh_15Nov_v1.py`) and official V2.4.0 context variables (`HIMCM_MODEL`, `HIMCM_RUN_DIR`, `HIMCM_WORKBOOK`, `HIMCM_OUT`) are configured, then execute:
+3. **10,000-Run Monte Carlo Simulation (16 Configurations):**
 
    ```bash
    export HIMCM_OUT=./mc_outputs
    python3 02_Code_and_Reproducibility/MonteCarloV24_GiaPhu_15Nov_v1.py
    ```
 
-3. **SHA-256 Checksum Verification:**
+4. **SHA-256 Integrity Checksum Verification:**
 
    ```bash
    cd 02_Code_and_Reproducibility && sha256sum -c MANIFEST_SHA256.txt
@@ -264,14 +236,21 @@ pip install numpy==2.5.3 pandas==3.0.5 matplotlib==3.11.2 seaborn==0.13.2 report
 
 ---
 
-## 8. Scope, Limitations & Caveats
+## 7. Scope, Limitations & Caveats
 
-* **Reduced-Order One-Zone Physics:** Resolves hourly quasi-steady heat-and-moisture balances without thermal mass, radiant view-factor exchange, or 3D CFD jet plumes.
-* **Open-Air Stadium Upper Bound:** The stadium branch sets $T_{\text{base}} = T_{\text{out}}$ with zero ventilation leakage, making `B-40` and `C-40` reductions upper bounds; under rail-station capture ($\eta_{\text{cap}} = 0.72$), realized relief scales proportionally.
-* **Internal Comparative Index ($AT_{\text{mod}}$):** $AT_{\text{mod}}$ with 28 °C / 38 °C thresholds is an internal operating metric rather than a clinical UTCI or NWS Heat Index standard.
-* **Uncalibrated Planning Inputs:** Equipment prices, utility tariffs, and coupling coefficients ($C_d$, $\alpha_{\text{sh}}$, $\text{mix}$, $c$) are planning-level assumptions requiring pilot sensor calibration prior to large-scale procurement.
-* **Model-Imposed Clipping:** Parameters such as `alpha_shelter`, `eps_evap`, `mix_eff`, and `f_dung` are clipped at 1.0 in the implementation; this is a computational bound, not a physical limit, and it skews Monte Carlo tails.
-* **No Ablation Study:** The V2.4.0 package does not include controlled single-component ablation runs, so no ablation percentages are reported.
+- **Reduced-Order One-Zone Physics:** Resolves hourly quasi-steady heat-and-moisture balances without sub-hourly thermal transients, thermal mass, or 3D computational fluid dynamics (CFD).
+- **Internal Comparative Index ($AT_{\text{mod}}$):** $AT_{\text{mod}}$ with $28\text{ }^\circ\text{C}$ / $38\text{ }^\circ\text{C}$ thresholds is a team-modified comparative metric rather than a clinical UTCI or NWS Heat Index standard.
+- **Uncalibrated Planning Inputs:** Equipment prices, utility tariffs, occupancy profiles, and coupling parameters (`alpha_shelter`, `mix_eff`, `alpha_cluster`, `f_dung`) are planning assumptions requiring instrumented pilot calibration before full procurement.
+- **Model-Imposed Upper Clipping:** Parameters such as `alpha_shelter`, `eps_evap`, `mix_eff`, and `f_dung` are clipped at `1.0` as a computational bound, creating tail skewness in Monte Carlo distributions.
+- **No Controlled Ablation Runs:** The V2.4.0 package does not include single-component ablation tables; isolating individual mechanism contributions remains future work.
+
+---
+
+## 8. AI Usage & Verification Statement
+
+In accordance with COMAP HiMCM 2026 rules and academic integrity standards, AI tools (**Claude Code**, **ChatGPT**, and **Gemini**) were used strictly as supporting instruments for Python modularization/debugging, literature synthesis, equation consistency checks, and English phrasing refinement.
+
+All problem formulation, thermodynamic assumptions, parameter choices, Open-Meteo data processing, simulation execution, and result interpretations were designed, directed, and independently verified by the student team via hand-calculated single-hour heat-balance checks, dimensional audits, and cross-checks against official V2.4.0 CSV outputs (detailed in pages 27–30 of `01_Final_Report/19386.pdf`).
 
 ---
 
@@ -279,20 +258,20 @@ pip install numpy==2.5.3 pandas==3.0.5 matplotlib==3.11.2 seaborn==0.13.2 report
 
 **COMAP HiMCM 2026 Team #19386** — High School for the Gifted, Vietnam National University Ho Chi Minh City (VNU-HCM):
 
-* **Lê Nghiêm Gia Phú (Team Leader):** Project coordination; mathematical formulation of the Cooling-Efficiency ($\eta_T$, $\eta_S$), Coverage Scaling Law ($\rho = 1$), and Semi-Open Rail Station models; design and execution of the 10,000-scenario Monte Carlo simulation (`MonteCarloV24_GiaPhu_15Nov_v1.py`); authorship of the public-facing Blog Post.
-* **Lê Minh:** Python implementation of the deterministic V2.4.0 solver (`PhysicalModel_LeMinh_13Nov_v1.0.py`), `cap120` sweeps, 56-case OAT sensitivity scripts, vectorized verification port, and SHA-256 audit tables.
-* **Đỗ Lê Chí Hùng:** Literature synthesis (`Freezer` & biophysical fan studies), equipment specification verification, and report drafting.
-* **Trần Hưng Phát:** Open-Meteo data preprocessing, triangular occupancy profile parameterization, and executive COO memorandum / operator guidelines drafting.
+- **Lê Nghiêm Gia Phú (Team Leader):** Project coordination and task delegation; mathematical formulation of the $\text{EDH38}$ Cooling-Efficiency and Semi-Open Rail Station models; design and execution of the 10,000-scenario Monte Carlo analysis across 16 configurations; authorship of the public-facing Blog Post.
+- **Lê Minh:** Python implementation of the deterministic V2.4.0 solver (`PhysicalModel_LeMinh_13Nov_v1.0.py`), `cap40`/`cap120` sweeps, Monte Carlo code implementation, 56-case OAT sensitivity scripts, verification checks, and SHA-256 audit manifests.
+- **Đỗ Lê Chí Hùng:** Literature synthesis (open-case infiltration and biophysical fan studies), equipment specification verification, and technical report drafting.
+- **Trần Hưng Phát:** Open-Meteo weather data preprocessing, occupancy profile parameterization, and executive COO memorandum / operator guidelines drafting.
 
 ## Citation
 
 ```bibtex
 @techreport{team19386_himcm2026,
-  title       = {Cooling What Matters: A Heat-Moisture Balance Framework for Measuring and Optimizing Cooling in Open-Air and Semi-Open Public Spaces},
+  title       = {Cool the Heat, Not Just the Air: A Framework for Making Site-Specific Decisions About Outdoor and Semi-Outdoor Public Spaces},
   author      = {Le, Nghiem Gia Phu and Le, Minh and Do, Le Chi Hung and Tran, Hung Phat},
   institution = {Consortium for Mathematics and Its Applications (COMAP) High School Mathematical Contest in Modeling (HiMCM), Team \#19386},
   year        = {2026},
   month       = {November},
-  note        = {Problem B Final Solution Paper}
+  note        = {Problem B Final Solution Paper (Model V2.4.0)}
 }
 ```
