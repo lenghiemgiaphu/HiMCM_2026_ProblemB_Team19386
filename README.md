@@ -178,7 +178,6 @@ HiMCM_2026_ProblemB_19386/
 │   ├── MonteCarloV24_GiaPhu_15Nov_v1.py                     # Parallel 10,000-run Monte Carlo engine (seed=42)
 │   ├── MANIFEST_SHA256.txt                                  # SHA-256 checksums for inputs, code & outputs
 │   ├── Reproduction_Log.txt                                 # Python 3.13.18 verification log (13/13 passed)
-│   └── Team19386_Final_Technical_Package_16Nov2026_v1_LITE/ # Weather CSVs, parameter workbook & test harness
 ├── 03_Verification_and_Figures/
 │   ├── fig01_pareto_tradeoff.png                            # Fig 1: Four-objective cap40 Pareto frontiers
 │   ├── Figure_1_Verification_Dossier_V2.4.0.pdf             # Audit verification dossier for Figure 1
