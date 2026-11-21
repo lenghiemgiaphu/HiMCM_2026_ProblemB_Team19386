@@ -187,18 +187,18 @@ Model rankings are decision support, not installation instructions. Before procu
 public-space-cooling-model/
 ├── 01_Final_Report/
 │   └── 19386.pdf                                  # submitted solution (summary sheet, report, memo, blog post, references, AI-use report)
-├── 02_Verification_and_Figures/
+├── 02_Final_Technical_Package.zip                 # self-contained package (95 files); contents below
+├── 03_Verification_and_Figures/
 │   ├── fig01_pareto_tradeoff.png                  # + Figure_1_Verification_Dossier_V2.4.0.pdf
 │   ├── fig02_edh38_efficiency.png                 # + Figure_2_Verification_Dossier_V2.4.0.pdf
 │   └── fig03_ahp_season_sensitivity.png           # + Figure_3_Verification_Dossier_V2.4.0.pdf
-├── 03_Final_Technical_Package.zip                 # self-contained package (95 files); contents below
 ├── 04_Data_and_Results/
 │   ├── AHP_Ranking_Official_Team19386_14Nov_v2.4.0.csv        # 290 Pareto-efficient configurations with AHP scores
 │   ├── Sensitivity_RankTracking_LeMinh_15Nov_v1.csv           # rank tracking across the 56 one-at-a-time cases
 │   └── ValidationChecks_Team19386_14Nov_v2.4.0.csv            # automated invariant checks
 └── README.md
 
-03_Final_Technical_Package.zip  →  Team19386_Final_Technical_Package_16Nov2026/
+02_Final_Technical_Package.zip  →  Team19386_Final_Technical_Package_16Nov2026/
 ├── 01_Official_Model/                             # V2.4.0 model, parameter workbook, three weather files, official result CSVs
 ├── 02_Extended_Analysis/                          # exploratory: cap-120 scan, Monte Carlo, heatwave, rank tracking, figures
 ├── 03_Literature/                                 # contest statement, device specifications, literature register
