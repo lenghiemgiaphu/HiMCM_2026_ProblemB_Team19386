@@ -14,7 +14,7 @@ COMAP High School Mathematical Contest in Modeling (HiMCM) 2026 · Problem B · 
 
 *An hourly, quasi-steady, one-zone heat-and-moisture balance with a served sub-zone, scored with a team-modified apparent-temperature index, screened with a four-objective Pareto filter, and ranked with the Analytic Hierarchy Process (AHP).*
 
-[Final report (PDF)](./01_Final_Report/19386.pdf) · [AHP ranking (CSV)](./04_Data_and_Results/AHP_Ranking_Official_Team19386_14Nov_v2.4.0.csv) · [Rank tracking (CSV)](./04_Data_and_Results/Sensitivity_RankTracking_LeMinh_15Nov_v5.0.csv) · [Validation checks (CSV)](./04_Data_and_Results/ValidationChecks_Team19386_14Nov_v2.4.0.csv)
+[Final report (PDF)](./01_Final_Report/19386.pdf) · [AHP ranking (CSV)](./04_Data_and_Results/AHP_Ranking_Official_Team19386_14Nov_v2.4.0.csv) · [Rank tracking (CSV)](./04_Data_and_Results/Sensitivity_RankTracking_LeMinh_15Nov_v1.csv) · [Validation checks (CSV)](./04_Data_and_Results/ValidationChecks_Team19386_14Nov_v2.4.0.csv)
 
 </div>
 
