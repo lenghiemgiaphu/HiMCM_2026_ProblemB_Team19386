@@ -69,7 +69,7 @@ $$T_{\mathrm{base}} = \frac{H_{\mathrm{roof}} T_{\mathrm{sol,roof}} + H_{\mathrm
 
 The background humidity ratio is capped at saturation in semi-enclosed venues. The open-air stadium branch sets *T*<sub>base</sub> = *T*<sub>amb</sub> and *w*<sub>zone</sub> = *w*<sub>amb</sub>:
 
-$$w_{\mathrm{zone}} = \min\!\Big\{ w_{\mathrm{sat}}(T_{\mathrm{base}}),\ w_{\mathrm{amb}} + \frac{N_t\, q_{\mathrm{lat}}}{h_{fg}\, \rho_{\mathrm{da}} \max(\dot V_{\mathrm{inf}}, 0.05)} \Big\}$$
+$$w_{\mathrm{zone}} = \min\!\Big( w_{\mathrm{sat}}(T_{\mathrm{base}}),\ w_{\mathrm{amb}} + \frac{N_t\, q_{\mathrm{lat}}}{h_{fg}\rho_{\mathrm{da}} \max(\dot{V}_{\mathrm{inf}}, 0.05)} \Big)$$
 
 ### 2.2 Cooling systems
 
